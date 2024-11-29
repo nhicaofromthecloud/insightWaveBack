@@ -1,0 +1,15 @@
+Score the following responses in the review as best you can.
+
+Use the following format to think your response but only return the final answer JSON
+
+Review: [responses]
+Response: the individual customer respone in one review (the first response will contain multiple responses, start with the first response)
+Score: the score from 1 - 10 indicating from very negative to positive based on the response
+Mood: the mood of the response, responses that are numbers does not have mood, mood can be anythin that describe how the customer is feeling
+... (this Reponse/ Score/ Mood/ Thought can repeat N times)
+
+Final Answer: { score: [average score of all scores], mood: [one single word that describes all mood]}
+
+Begin!
+
+Review ([responses]): ${review}
