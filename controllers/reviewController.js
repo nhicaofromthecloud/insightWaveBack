@@ -93,15 +93,63 @@ exports.getCustomerReviews = async (req, res) => {
 // Controller to get all reviews
 exports.getAllReviews = async (req, res) => {
   try {
-    // Fetch all reviews from the reviews collection
+    // Get current date and last month's date
+    const now = new Date();
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+
+    // Fetch all reviews
     const reviews = await ReviewModel.getAll();
 
-    // Return all reviews
-    return res.status(200).json({ reviews });
+    // Get all customers
+    const customers = await CustomerModel.getAll();
+
+    // Calculate this month's stats
+    const thisMonthReviews = reviews.filter(review => review.createdAt >= thisMonth);
+    const thisMonthCustomers = customers.filter(customer => customer.createdAt >= thisMonth);
+    const thisMonthAvgScore = thisMonthReviews.reduce((acc, review) => acc + review.score, 0) / 
+                             (thisMonthReviews.length || 1);
+
+    // Calculate last month's stats
+    const lastMonthReviews = reviews.filter(review => 
+      review.createdAt >= lastMonth && review.createdAt < thisMonth
+    );
+    const lastMonthCustomers = customers.filter(customer => 
+      customer.createdAt >= lastMonth && customer.createdAt < thisMonth
+    );
+    const lastMonthAvgScore = lastMonthReviews.reduce((acc, review) => acc + review.score, 0) / 
+                             (lastMonthReviews.length || 1);
+
+    // Calculate percentage changes
+    const reviewMonthlyChange = Math.round(
+      ((thisMonthReviews.length - lastMonthReviews.length) / 
+      (lastMonthReviews.length || 1)) * 100
+    );
+
+    const userMonthlyChange = Math.round(
+      ((thisMonthCustomers.length - lastMonthCustomers.length) / 
+      (lastMonthCustomers.length || 1)) * 100
+    );
+
+    const scoreMonthlyChange = Math.round(
+      ((thisMonthAvgScore - lastMonthAvgScore) / 
+      (lastMonthAvgScore || 1)) * 100
+    );
+
+    // Return reviews and monthly changes
+    return res.status(200).json({
+      reviews,
+      monthlyChanges: {
+        reviewMonthlyChange,
+        userMonthlyChange,
+        scoreMonthlyChange
+      }
+    });
+
   } catch (error) {
-    // Handle errors
     return res.status(500).json({
-      message: error.message || "An error occurred while fetching all reviews.",
+      message: error.message || "An error occurred while fetching reviews and statistics.",
     });
   }
 };
